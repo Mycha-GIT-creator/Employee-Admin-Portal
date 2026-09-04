@@ -7,7 +7,6 @@ namespace Employee_Admin_Portal.Data
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
-
         }
         public DbSet<Employee> Employees { get; set; }
     }

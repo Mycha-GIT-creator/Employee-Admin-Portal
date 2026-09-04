@@ -1,9 +1,11 @@
-﻿using Employee_Admin_Portal.Data;
-using Employee_Admin_Portal.Models;
-using Employee_Admin_Portal.Models.Entities;
-using Microsoft.AspNetCore.Http;
+﻿using Employee_Admin_Portal.Features.Employees.Commands.AddEmployee;
+using Employee_Admin_Portal.Features.Employees.Commands.DeleteEmployee;
+using Employee_Admin_Portal.Features.Employees.Commands.PatchEmployee;
+using Employee_Admin_Portal.Features.Employees.Commands.UpdateEmployee;
+using Employee_Admin_Portal.Features.Employees.Queries.GetAllEmployees;
+using Employee_Admin_Portal.Features.Employees.Queries.GetEmployeeById;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Employee_Admin_Portal.Controllers
 {
@@ -11,119 +13,62 @@ namespace Employee_Admin_Portal.Controllers
     [ApiController]
     public class EmployeesController : ControllerBase
     {
-        private readonly ApplicationDbContext dbContext;
+        private readonly IMediator mediator;
 
-        public EmployeesController(ApplicationDbContext dbContext)
+        public EmployeesController(IMediator mediator)
         {
-            this.dbContext = dbContext;
+            this.mediator = mediator;
         }
-
         [HttpGet]
-        public IActionResult GetAllEmployees()
+        public async Task<IActionResult> GetAllEmployees()
         {
-            var allEmployees = dbContext.Employees.ToList();
-            return Ok(allEmployees);
+            var result = await mediator.Send(new GetAllEmployeesQuery());
+            return Ok(result);
         }
 
         [HttpGet]
         [Route("{id:guid}")]
-        public IActionResult GetEmployeeById(Guid id)
+        public async Task<IActionResult> GetEmployeeById(Guid id)
         {
-            var employee = dbContext.Employees.Find(id);
-            
-            if (employee == null)
-            {
-                return NotFound();
-            }
-            return Ok(employee);
+            var result = await mediator.Send(new GetEmployeeByIdQuery(id));
+            if (result is null) return NotFound();
+            return Ok(result);
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddEmployee(AddEmployeeDto employeeDto)
+        public async Task<IActionResult> AddEmployee(AddEmployeeCommand command)
         {
-            var employeeEntity = new Employee()
-            {
-                Name = employeeDto.Name,
-                Email = employeeDto.Email,
-                Phone = employeeDto.Phone,
-                Salary = employeeDto.Salary
-            };
-
-            dbContext.Employees.Add(employeeEntity);
-            dbContext.SaveChanges();
-            return Ok(employeeEntity);
+            var result = await mediator.Send(command);
+            return Ok(result);
         }
 
         [HttpPut]
         [Route("{id:guid}")]
-        public IActionResult UpdateEmployee(Guid id, UpdateEmployeeDto updateEmployeeDto)
+        public async Task<IActionResult> UpdateEmployee(Guid id, UpdateEmployeeCommand command)
         {
-            var employee = dbContext.Employees.Find(id);
-            
-            if (employee == null)
-            {
-                return NotFound();
-            }
+            command.Id = id;
+            var result = await mediator.Send(command);
+            if (result is null) return NotFound();
+            return Ok(result);
+        }
 
-            employee.Name = updateEmployeeDto.Name;
-            employee.Email = updateEmployeeDto.Email;
-            employee.Phone = updateEmployeeDto.Phone;
-            employee.Salary = updateEmployeeDto.Salary;
-
-            dbContext.SaveChanges();
-            
-            return Ok(employee);
+        [HttpPatch]
+        [Route("{id:guid}")]
+        public async Task<IActionResult> PatchEmployee(Guid id, PatchEmployeeCommand command)
+        {
+            command.Id = id;
+            var result = await mediator.Send(command);
+            if (result is null) return NotFound();
+            return Ok(result);
         }
 
         [HttpDelete]
         [Route("{id:guid}")]
-        public IActionResult DeleteEmployee(Guid id)
+        public async Task<IActionResult> DeleteEmployee(Guid id)
         {
-            var employee = dbContext.Employees.Find(id);
-            if (employee == null)
-            {
-                return NotFound();
-            }
-
-            dbContext.Employees.Remove(employee);
-            
-            dbContext.SaveChanges();
+            var result = await mediator.Send(new DeleteEmployeeCommand(id));
+            if (!result) return NotFound();
             return Ok();
-        }
-        
-        [HttpPatch]
-        [Route("{id:guid}")]
-        public IActionResult PatchEmployee(Guid id, PatchEmployeeDto patchEmployeeDto)
-        {
-            var employee = dbContext.Employees.Find(id);
-            if (employee == null)
-            {
-                return NotFound();
-            }
-
-            if (!string.IsNullOrEmpty(patchEmployeeDto.Name))
-            {
-                employee.Name = patchEmployeeDto.Name;
-            }
-
-            if (!string.IsNullOrEmpty(patchEmployeeDto.Email))
-            {
-                employee.Email = patchEmployeeDto.Email;
-            }
-
-            if (!string.IsNullOrEmpty(patchEmployeeDto.Phone))
-            {
-                employee.Phone = patchEmployeeDto.Phone;
-            }
-
-            if (patchEmployeeDto.Salary.HasValue)
-            {
-                employee.Salary = patchEmployeeDto.Salary.Value;
-            }
-
-            dbContext.SaveChanges();
-
-            return Ok(employee);
         }
     }
 }
