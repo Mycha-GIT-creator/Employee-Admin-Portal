@@ -9,5 +9,12 @@ namespace Employee_Admin_Portal.Data
         {
         }
         public DbSet<Employee> Employees { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Employee>()
+                .Property(employee => employee.Salary)
+                .HasPrecision(18, 2);
+        }
     }
 }

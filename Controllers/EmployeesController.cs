@@ -68,7 +68,7 @@ namespace Employee_Admin_Portal.Controllers
         {
             var result = await mediator.Send(new DeleteEmployeeCommand(id));
             if (!result) return NotFound();
-            return Ok();
+            return NoContent();
         }
     }
 }
