@@ -1,121 +1,115 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
+import { employeeApi } from './api'
+import type { Employee, EmployeeInput } from './types'
+
+const emptyForm: EmployeeInput = { name: '', email: '', phone: '', salary: '' }
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [error, setError] = useState('')
+  const [form, setForm] = useState<EmployeeInput>(emptyForm)
+  const [editingId, setEditingId] = useState<string | null>(null)
+
+  const loadEmployees = () => {
+    employeeApi.list()
+      .then(setEmployees)
+      .catch(() => setError('Could not load employees'))
+  }
+
+  useEffect(() => {
+    loadEmployees()
+  }, [])
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setError('')
+    try {
+      if (editingId) {
+        await employeeApi.update(editingId, form)
+      } else {
+        await employeeApi.create(form)
+      }
+      setForm(emptyForm)
+      setEditingId(null)
+      loadEmployees()
+    } catch {
+      setError(editingId ? 'Could not update employee' : 'Could not create employee')
+    }
+  }
+
+  const handleDelete = async (employee: Employee) => {
+    if (!window.confirm(`Delete ${employee.name}?`)) return
+    setError('')
+    try {
+      await employeeApi.remove(employee.id)
+      loadEmployees()
+    } catch {
+      setError('Could not delete employee')
+    }
+  }
+
+  const startEdit = (employee: Employee) => {
+    setEditingId(employee.id)
+    setForm({
+      name: employee.name,
+      email: employee.email,
+      phone: employee.phone ?? '',
+      salary: String(employee.salary),
+    })
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setForm(emptyForm)
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="shell">
+      <h1>Employees</h1>
+      {error && <p className="error">{error}</p>}
 
-      <div className="ticks"></div>
+      <ul>
+        {employees.map((employee) => (
+          <li key={employee.id}>
+            <span className="employee-info">
+              {employee.name} — {employee.email} — ${employee.salary}
+            </span>
+            <span className="employee-actions">
+              <button className="secondary" onClick={() => startEdit(employee)}>Edit</button>
+              <button className="secondary" onClick={() => handleDelete(employee)}>Delete</button>
+            </span>
+          </li>
+        ))}
+      </ul>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <h2>{editingId ? 'Edit employee' : 'Add employee'}</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          placeholder="Name"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+        <input
+          placeholder="Email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+        />
+        <input
+          placeholder="Phone (optional)"
+          value={form.phone}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+        />
+        <input
+          placeholder="Salary"
+          value={form.salary}
+          onChange={(e) => setForm({ ...form, salary: e.target.value })}
+        />
+        <span className="employee-actions">
+          <button type="submit">{editingId ? 'Save changes' : 'Add'}</button>
+          {editingId && <button type="button" className="secondary" onClick={cancelEdit}>Cancel</button>}
+        </span>
+      </form>
+    </div>
   )
 }
 
