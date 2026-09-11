@@ -52,4 +52,4 @@ jobs:
           app-name: 'employeeportal-api-mychasji'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_DC551FF3E59B442CA61BB7A3D7B3F1DD }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_097E39716F984D77B4186DAC5A888D11 }}
