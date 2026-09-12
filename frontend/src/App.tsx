@@ -5,10 +5,13 @@ import type { Employee, EmployeeInput } from './types'
 const emptyForm: EmployeeInput = { name: '', email: '', phone: '', salary: '' }
 
 function App() {
-  const [employees, setEmployees] = useState<Employee[]>([])
-  const [error, setError] = useState('')
-  const [form, setForm] = useState<EmployeeInput>(emptyForm)
-  const [editingId, setEditingId] = useState<string | null>(null)
+    const [employees, setEmployees] = useState<Employee[]>([])
+    const [error, setError] = useState('')
+    const [form, setForm] = useState<EmployeeInput>(emptyForm)
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [searchName, setSearchName] = useState('')
+
+
 
   const loadEmployees = () => {
     employeeApi.list()
@@ -19,6 +22,13 @@ function App() {
   useEffect(() => {
     loadEmployees()
   }, [])
+
+  const handleSearch = () => {
+        setError('')
+        employeeApi.search({ name: searchName })
+            .then(setEmployees)
+            .catch(() => setError('Search failed'))
+  }
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -65,7 +75,17 @@ function App() {
 
   return (
     <div className="shell">
-      <h1>Employees</h1>
+        <h1>Employees </h1>
+        < div style = {{ display: 'flex', gap: '8px', marginBottom: '16px' }
+}>
+    <input
+          placeholder="Search by name"
+value = { searchName }
+onChange = {(e) => setSearchName(e.target.value)}
+        />
+    < button onClick = { handleSearch } > Search </button>
+        < button className = "secondary" onClick = {() => { setSearchName(''); loadEmployees() }}> Clear </button>
+            </div>
       {error && <p className="error">{error}</p>}
 
       <ul>

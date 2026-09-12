@@ -37,6 +37,13 @@ function toPayload(input: EmployeeInput) {
 
 export const employeeApi = {
     list: () => request<Employee[]>(endpoint),
+    search: (filters: { name?: string; minSalary?: string; maxSalary?: string }) => {
+        const params = new URLSearchParams()
+        if (filters.name) params.set('name', filters.name)
+        if (filters.minSalary) params.set('minSalary', filters.minSalary)
+        if (filters.maxSalary) params.set('maxSalary', filters.maxSalary)
+        return request<Employee[]>(`${endpoint}/search?${params.toString()}`)
+    },
     create: (input: EmployeeInput) => request<Employee>(endpoint, {
         method: 'POST',
         body: JSON.stringify(toPayload(input)),

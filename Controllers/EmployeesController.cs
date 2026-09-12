@@ -4,8 +4,10 @@ using Employee_Admin_Portal.Features.Employees.Commands.PatchEmployee;
 using Employee_Admin_Portal.Features.Employees.Commands.UpdateEmployee;
 using Employee_Admin_Portal.Features.Employees.Queries.GetAllEmployees;
 using Employee_Admin_Portal.Features.Employees.Queries.GetEmployeeById;
+using Employee_Admin_Portal.Features.Employees.Queries.SearchEmployees;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+
 
 namespace Employee_Admin_Portal.Controllers
 {
@@ -23,6 +25,19 @@ namespace Employee_Admin_Portal.Controllers
         public async Task<IActionResult> GetAllEmployees()
         {
             var result = await mediator.Send(new GetAllEmployeesQuery());
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("search")]
+        public async Task<IActionResult> SearchEmployees(string? name, decimal? minSalary, decimal? maxSalary)
+        {
+            var result = await mediator.Send(new SearchEmployeesQuery
+            {
+                NameFilter = name,
+                MinSalary = minSalary,
+                MaxSalary = maxSalary
+            });
             return Ok(result);
         }
 

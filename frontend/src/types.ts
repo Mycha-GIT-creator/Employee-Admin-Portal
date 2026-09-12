@@ -12,3 +12,9 @@ export type EmployeeInput = {
   phone: string
   salary: string
 }
+
+export type SearchFilters = {
+    name: string
+    minSalary: string
+    maxSalary: string
+}
