@@ -1,11 +1,21 @@
 import type { Employee, EmployeeInput } from './types'
+const TOKEN_KEY = 'authToken'
 
 const endpoint = `${import.meta.env.VITE_API_BASE_URL}/api/Employees`
+export const auth = {
+  getToken: () => localStorage.getItem(TOKEN_KEY),
+  setToken: (token: string) => localStorage.setItem(TOKEN_KEY, token),
+  clearToken: () => localStorage.removeItem(TOKEN_KEY),
+}
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(url, {
-        headers: { 'Content-Type': 'application/json' },
-        ...options,
+  const token = auth.getToken()
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    ...options,
     })
 
     if (!response.ok) {
@@ -33,6 +43,13 @@ function toPayload(input: EmployeeInput) {
         phone: input.phone.trim() || null,
         salary,
     }
+}
+export const authApi = {
+  login: (username: string, password: string) =>
+    request<{ token: string }>(`${import.meta.env.VITE_API_BASE_URL}/api/Auth/login`, {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
 }
 
 export const employeeApi = {
