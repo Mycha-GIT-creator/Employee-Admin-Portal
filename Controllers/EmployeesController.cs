@@ -7,12 +7,14 @@ using Employee_Admin_Portal.Features.Employees.Queries.GetEmployeeById;
 using Employee_Admin_Portal.Features.Employees.Queries.SearchEmployees;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace Employee_Admin_Portal.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class EmployeesController : ControllerBase
     {
         private readonly IMediator mediator;
