@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { employeeApi } from './api'
 import type { Employee, EmployeeInput } from './types'
+import Login from './Login'
+import { auth } from './api'
 
 const emptyForm: EmployeeInput = { name: '', email: '', phone: '', salary: '' }
 
@@ -10,6 +12,7 @@ function App() {
     const [form, setForm] = useState<EmployeeInput>(emptyForm)
     const [editingId, setEditingId] = useState<string | null>(null)
     const [searchName, setSearchName] = useState('')
+    const [isLoggedIn, setIsLoggedIn] = useState(!!auth.getToken())
 
 
 
@@ -73,15 +76,22 @@ function App() {
     setForm(emptyForm)
   }
 
+ if (!isLoggedIn) {
+    return <Login onLoginSuccess={() => setIsLoggedIn(true)} />
+  }
+
   return (
     <div className="shell">
         <h1>Employees </h1>
-        < div style = {{ display: 'flex', gap: '8px', marginBottom: '16px' }
-}>
-    <input
-          placeholder="Search by name"
-value = { searchName }
-onChange = {(e) => setSearchName(e.target.value)}
+        <button className="secondary" onClick={() => { auth.clearToken(); setIsLoggedIn(false); }} style={{ marginBottom: '16px' }}>
+        Log out
+        </button>
+            < div style = {{ display: 'flex', gap: '8px', marginBottom: '16px' }
+      }>
+          <input
+                placeholder="Search by name"
+      value = { searchName }
+      onChange = {(e) => setSearchName(e.target.value)}
         />
     < button onClick = { handleSearch } > Search </button>
         < button className = "secondary" onClick = {() => { setSearchName(''); loadEmployees() }}> Clear </button>
