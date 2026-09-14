@@ -16,18 +16,14 @@ namespace Employee_Admin_Portal.Features.Employees.Queries.SearchEmployees
 
         public async Task<List<Employee>> Handle(SearchEmployeesQuery request, CancellationToken cancellationToken)
         {
-            var query = dbContext.Employees.AsNoTracking().AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(request.NameFilter))
-                query = query.Where(e => e.Name.Contains(request.NameFilter));
-
-            if (request.MinSalary.HasValue)
-                query = query.Where(e => e.Salary >= request.MinSalary);
-
-            if (request.MaxSalary.HasValue)
-                query = query.Where(e => e.Salary <= request.MaxSalary);
-
-            return await query.ToListAsync(cancellationToken);
+            return await dbContext.Employees
+                .FromSqlInterpolated($@"
+                    EXEC sp_GetEmployeesBySalaryRange
+                        @NameFilter = {request.NameFilter},
+                        @MinSalary = {request.MinSalary},
+                        @MaxSalary = {request.MaxSalary}")
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
         }
     }
 }
